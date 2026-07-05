@@ -28,6 +28,8 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+AUTH_USER_MODEL='core.User'
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -43,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'corsheaders',
+
 
     # Local apps
     'core',
@@ -91,14 +94,15 @@ WSGI_APPLICATION = 'motorhub_bck.wsgi.application'
 #     }
 # }
 DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'motorhub_bck',
         'USER': 'root',
         'PASSWORD': '',
-        'HOST': 'localhost',
-
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
     }
-
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
