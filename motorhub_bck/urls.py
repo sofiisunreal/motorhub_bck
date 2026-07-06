@@ -29,5 +29,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # core app
-    path('api/', include('core.urls')),
+    path('api/core/', include('core.urls')),
 ]

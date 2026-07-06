@@ -46,6 +46,8 @@ def Register(request):
 
     except IntegrityError:
         return Response({'error': 'Database error'}, status=400)
+    except Exception as e:
+        return Response({"error":str(e)})
 
 # login
 @api_view(['POST'])

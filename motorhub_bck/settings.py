@@ -23,9 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-3zl#qdao!fw31-vzx!%jc3(xm#^ncm&p8jkdot#g07cip6q&-e'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+     "127.0.0.1",
+    "localhost",
+]
 
 
 AUTH_USER_MODEL='core.User'
@@ -142,6 +145,6 @@ STATIC_URL = 'static/'
 
 REST_FRAMEWORK={
     'DEFAULT_AUTHENTICATION_CLASSES':('rest_framework_simplejwt.authentication.JWTAuthentication'),
-    'DEFAULT_PERMISSION_CLASSES':('rest_framework.permission.IsAuthenticated'),
+    'DEFAULT_PERMISSION_CLASSES':('rest_framework.permissions.IsAuthenticated'),
     'DEFAULT_SCHEMA_CLASS':('drf_spectacular.openapi.AutoSchema'),
 }
