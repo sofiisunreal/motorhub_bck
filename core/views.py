@@ -1,15 +1,18 @@
+from tokenize import TokenError
+
 from django.contrib.auth import authenticate
 from django.db import IntegrityError, transaction
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import *
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 @transaction.atomic
 def Register(request):
 
@@ -41,8 +44,16 @@ def Register(request):
             role=role,
             phone_number=phone_number
         )
+        if role == "staff":
+            user.is_staff = True
+            user.save()
 
-        return Response({'message': 'User created successfully'}, status=201)
+        return Response({
+                "user_id":user.id,
+                "username":user.username,
+                "role":user.role,
+                "message":f"{role.capitalize()} Registered successfuly"
+        })
 
     except IntegrityError:
         return Response({'error': 'Database error'}, status=400)
@@ -63,15 +74,43 @@ def Login(request):
   if user is not None:
     refresh=RefreshToken.for_user(user)
     return Response({
-      'refresh':str(refresh),
-      'access':str(refresh.access_token),
       'user':{
         'id':user.id,
         'username':user.username,
         'email':user.email,
         'role':user.role,
         'phone_number':user.phone_number
-      }
+      },
+      'refresh':str(refresh),
+      'access':str(refresh.access_token),
     },status=200)
   else:
     return Response({'error':'Invalid credentials'},status=401)
+
+# logout
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def Logout(request):
+    try:
+        refresh_token=request.data.get("refresh")
+        token=RefreshToken(refresh_token)
+        token.blacklist()
+        return Response({"message":"Logout successful"},status=200)
+    except TokenError:
+        return Response({"message": "Invalid or expired token"})
+    except Exception as e:
+        return Response({"error":str(e)})
+
+
+# get profile
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def Profile(request):
+    user=request.user
+    return Response({
+        'id':user.id,
+        'username':user.username,
+        'email':user.email,
+        'role':user.role,
+        'phone_number':user.phone_number
+    },status=200)

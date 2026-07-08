@@ -23,12 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-3zl#qdao!fw31-vzx!%jc3(xm#^ncm&p8jkdot#g07cip6q&-e'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = [
-     "127.0.0.1",
-    "localhost",
-]
+ALLOWED_HOSTS = []
 
 
 AUTH_USER_MODEL='core.User'
@@ -54,6 +51,7 @@ INSTALLED_APPS = [
     'core',
     'cars',
     'sales',
+    'suppliers',
 ]
 
 MIDDLEWARE = [
@@ -143,8 +141,23 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-REST_FRAMEWORK={
-    'DEFAULT_AUTHENTICATION_CLASSES':('rest_framework_simplejwt.authentication.JWTAuthentication'),
-    'DEFAULT_PERMISSION_CLASSES':('rest_framework.permissions.IsAuthenticated'),
-    'DEFAULT_SCHEMA_CLASS':('drf_spectacular.openapi.AutoSchema'),
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+from datetime import timedelta
+SIMPLE_JWT={
+    'ACCESS_TOKEN_LIFETIME':timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME':timedelta(days=7),
+
+    'ROTATE_REFRESH_TOKEN':True,
+    'BLACKLIST_AFTER_ROTATION':True,
 }

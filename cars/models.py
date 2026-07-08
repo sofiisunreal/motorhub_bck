@@ -1,19 +1,8 @@
 from django.db import models
-
+from suppliers.models import Supplier
 from core.models import BaseModel
 
 # Create your models here.
-# supplier model
-class Supplier(BaseModel):
-    name = models.CharField(max_length=100)
-    company_name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15)
-    email = models.EmailField(blank=True, null=True)
-    address = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.company_name
-
 
 
 # car model

@@ -30,4 +30,6 @@ urlpatterns = [
 
     # core app
     path('api/core/', include('core.urls')),
+    path('api/cars/', include('cars.urls')),
+    path('api/suppliers/', include('suppliers.urls')),
 ]
