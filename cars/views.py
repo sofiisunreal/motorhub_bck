@@ -61,8 +61,12 @@ def AddCar(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def ViewCars(request):
+  status_filter = request.query_params.get("status")
+  if status_filter:
+    cars = Car.objects.filter(status=status_filter)
+  else:
+    cars = Car.objects.all()
 
-  cars = Car.objects.all()
   cars_data = []
   for car in cars:
     cars_data.append({
@@ -71,7 +75,7 @@ def ViewCars(request):
       "brand": car.brand,
       "year": car.year,
       "vin_number": car.vin_number,
-      "price": str(car.price),
+      "price": str(car.buying_price),
       "status": car.status,
       "image": request.build_absolute_uri(car.image.url) if car.image else None
     })

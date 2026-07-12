@@ -3,12 +3,15 @@ from tokenize import TokenError
 from django.contrib.auth import authenticate
 from django.db import IntegrityError, transaction
 
+from rest_framework import request, request, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from core.serializers import StaffSerializer
 
 from .models import *
 @api_view(['POST'])
@@ -114,3 +117,16 @@ def Profile(request):
         'role':user.role,
         'phone_number':user.phone_number
     },status=200)
+
+
+# admin to view staff and cars sold
+class StaffViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.filter(role='staff')
+    serializer_class = StaffSerializer
+    permission_classes = [IsAdminUser]
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        username = self.request.query_params.get('username')
+        if username:
+            queryset = queryset.filter(username__icontains=username)
+        return queryset

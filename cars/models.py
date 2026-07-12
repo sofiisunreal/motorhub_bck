@@ -14,7 +14,7 @@ class Car(BaseModel):
 
     vin_number = models.CharField(max_length=100,unique=True)
 
-    price = models.DecimalField(max_digits=12,decimal_places=2)
+    buying_price = models.DecimalField(max_digits=12,decimal_places=2)
     STATUS_CHOICES = (
     ('available', 'Available'),
     ('reserved', 'Reserved'),
