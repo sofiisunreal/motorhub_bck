@@ -1,7 +1,8 @@
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework import generics
 from suppliers.models import Supplier
 
 from .models import Car
@@ -19,10 +20,10 @@ def AddCar(request):
   brand = request.data.get("brand")
   year = request.data.get("year")
   vin_number = request.data.get("vin_number")
-  price = request.data.get("price")
+  buying_price = request.data.get("buying_price")
   status = request.data.get("status", "available")
 
-  if not supplier_id or not brand or not year or not vin_number or not price:
+  if not supplier_id or not brand or not year or not vin_number or not buying_price:
     return Response(
       {"error": "All required fields are required"},
       status=400
@@ -47,7 +48,7 @@ def AddCar(request):
       brand=brand,
       year=year,
       vin_number=vin_number,
-      price=price,
+      buying_price=buying_price,
       status=status
     )
     return Response({
@@ -57,7 +58,7 @@ def AddCar(request):
   except Exception as e:
     return Response({"error": str(e)}, status=400)
 
-# view cars
+# view cars based on statusof the car
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def ViewCars(request):
