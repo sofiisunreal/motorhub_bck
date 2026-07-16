@@ -4,9 +4,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
-
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from cars.models import Car
+from core.models import User
 from sales.models import Sale
+from suppliers.models import Supplier
 # Create your views here.
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -108,4 +110,134 @@ def ViewSales(request):
 
     return Response(data)
 
+# admin dashboard view
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def AdminDashboard(request):
 
+    total_staff = User.objects.filter(role="staff").count()
+    total_suppliers = Supplier.objects.count()
+    total_cars = Car.objects.count()
+    available_cars = Car.objects.filter(status="available").count()
+    reserved_cars = Car.objects.filter(status="reserved").count()
+    sold_cars = Car.objects.filter(status="sold").count()
+
+    total_revenue = Sale.objects.aggregate(
+        total=Sum("selling_price")
+    )["total"] or 0
+
+    profit = Sale.objects.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F("selling_price") - F("car__buying_price"),
+                output_field=DecimalField()
+            )
+        )
+    )["total"] or 0
+
+    # staff performance
+    staff_performance = []
+    staff_members = User.objects.filter(role="staff")
+
+    for staff in staff_members:
+        sales = Sale.objects.filter(sold_by=staff)
+
+        revenue = sales.aggregate(
+            total=Sum("selling_price")
+        )["total"] or 0
+
+        staff_profit = sales.aggregate(
+            total=Sum(
+                ExpressionWrapper(
+                    F("selling_price") - F("car__buying_price"),
+                    output_field=DecimalField()
+                )
+            )
+        )["total"] or 0
+
+        staff_performance.append({
+            "username": staff.username,
+            "cars_sold": sales.count(),
+            "revenue": revenue,
+            "profit": staff_profit
+        })
+
+
+    recent_sales = []
+
+    sales = Sale.objects.order_by("-created_at")[:5]
+
+    for sale in sales:
+
+        recent_sales.append({
+            "sale_id": sale.id,
+            "vin_number": sale.car.vin_number,
+            "brand": sale.car.brand,
+            "customer_name": sale.customer_name,
+            "selling_price": sale.selling_price,
+            "sold_by": sale.sold_by.username if sale.sold_by else None,
+            "date": sale.created_at
+        })
+
+    return Response({
+
+        "total_staff": total_staff,
+        "total_suppliers": total_suppliers,
+        "total_cars": total_cars,
+        "available_cars": available_cars,
+        "reserved_cars": reserved_cars,
+        "sold_cars": sold_cars,
+        "total_revenue": total_revenue,
+        "total_profit": profit,
+        "staff_performance": staff_performance,
+        "recent_sales": recent_sales
+
+    })
+
+
+# staff dashboard view
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def StaffDashboard(request):
+
+    if request.user.role != "staff":
+        return Response(
+            {"error": "Unauthorized"},
+            status=403
+        )
+
+    sales = Sale.objects.filter(sold_by=request.user)
+    total_cars_sold = sales.count()
+    total_revenue = sales.aggregate(
+        total=Sum("selling_price")
+    )["total"] or 0
+    profit = sales.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F("selling_price") - F("car__buying_price"),
+                output_field=DecimalField()
+            )
+        )
+    )["total"] or 0
+
+    recent_sales = []
+
+    for sale in sales.order_by("-created_at")[:5]:
+
+        recent_sales.append({
+            "sale_id": sale.id,
+            "vin_number": sale.car.vin_number,
+            "brand": sale.car.brand,
+            "customer_name": sale.customer_name,
+            "selling_price": sale.selling_price,
+            "date": sale.created_at
+        })
+
+    return Response({
+
+        "total_cars_sold": total_cars_sold,
+        "total_revenue": total_revenue,
+        "total_profit": profit,
+        "recent_sales": recent_sales
+
+    })
