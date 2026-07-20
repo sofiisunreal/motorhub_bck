@@ -22,6 +22,7 @@ def AddCar(request):
   vin_number = request.data.get("vin_number")
   buying_price = request.data.get("buying_price")
   status = request.data.get("status", "available")
+  image = request.FILES.get("image")
 
   if not supplier_id or not brand or not year or not vin_number or not buying_price:
     return Response(
@@ -49,7 +50,8 @@ def AddCar(request):
       year=year,
       vin_number=vin_number,
       buying_price=buying_price,
-      status=status
+      status=status,
+      image=image
     )
     return Response({
       "message": "Car added successfully",
