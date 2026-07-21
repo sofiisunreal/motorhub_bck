@@ -8,7 +8,8 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
 """
 
 import os
-
+import sys
+sys.path.append('/home/sophiehiggs/www/motorhub_bck/')
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'motorhub_bck.settings')
