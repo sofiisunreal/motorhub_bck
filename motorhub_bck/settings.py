@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'motorhub_bck.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'motorhub',
+        'NAME': 'sophiehiggs_motorhub',
         'USER': 'sophiehiggs',
         'PASSWORD': 'modcom2026',
         'HOST': 'mysql-sophiehiggs.alwaysdata.net',
