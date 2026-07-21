@@ -24,12 +24,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-3zl#qdao!fw31-vzx!%jc3(xm#^ncm&p8jkdot#g07cip6q&-e'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'mysql-sophiehiggs.alwaysdata.net',
+
+]
 
 
 AUTH_USER_MODEL='core.User'
@@ -101,11 +106,11 @@ WSGI_APPLICATION = 'motorhub_bck.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'motorhub_bck',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'NAME': 'motorhub',
+        'USER': 'sophiehiggs',
+        'PASSWORD': 'modcom2026',
+        'HOST': 'mysql-sophiehiggs.alwaysdata.net',
+
     }
 }
 
