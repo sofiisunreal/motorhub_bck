@@ -19,7 +19,8 @@ from .models import *
 @permission_classes([IsAdminUser])
 @transaction.atomic
 def Register(request):
-
+    first_name = request.data.get('first_name')
+    last_name = request.data.get('last_name')
     username = request.data.get('username')
     email = request.data.get('email')
     password = request.data.get('password')
@@ -42,6 +43,8 @@ def Register(request):
 
     try:
         user = User.objects.create_user(
+            first_name=first_name,
+            last_name=last_name,
             username=username,
             email=email,
             password=password,
