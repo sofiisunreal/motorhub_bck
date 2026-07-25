@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import generics
+from cars.serializers import CarSerializer
 from suppliers.models import Supplier
 
 from .models import Car
@@ -115,4 +116,33 @@ def UpdateCarStatus(request, id):
     }, status=200)
   except Exception as e:
     return Response({"error": str(e)}, status=400)
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def UpdateCar(request, id):
+    try:
+        car = Car.objects.get(id=id)
+    except Car.DoesNotExist:
+        return Response(
+            {"error": "Car does not exist"},
+            status=404
+        )
+
+    serializer = CarSerializer(
+        car,
+        data=request.data,
+        partial=True
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=200
+        )
+
+    return Response(
+        serializer.errors,
+        status=400
+    )
 
