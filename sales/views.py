@@ -258,6 +258,8 @@ def AdminDashboard(request):
             "date": sale.created_at
         })
 
+
+
     return Response({
         "total_staff": total_staff,
         "total_suppliers": total_suppliers,

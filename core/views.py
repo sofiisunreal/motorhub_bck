@@ -81,14 +81,16 @@ def Login(request):
   if user is not None:
     refresh=RefreshToken.for_user(user)
     return Response({
-      'user':{
+    'user':{
         'id':user.id,
+        'first_name':user.first_name,
+        'last_name':user.last_name,
         'username':user.username,
         'email':user.email,
         'role':user.role,
         'phone_number':user.phone_number
-      },
-      'refresh':str(refresh),
+    },
+    'refresh':str(refresh),
       'access':str(refresh.access_token),
     },status=200)
   else:
@@ -109,19 +111,30 @@ def Logout(request):
         return Response({"error":str(e)})
 
 
-# get profile
-@api_view(['GET'])
+from .serializers import ProfileSerializer
+
+@api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
 def Profile(request):
-    user=request.user
-    return Response({
-        'id':user.id,
-        'username':user.username,
-        'email':user.email,
-        'role':user.role,
-        'phone_number':user.phone_number
-    },status=200)
 
+    if request.method == "GET":
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data)
+
+    serializer = ProfileSerializer(
+        request.user,
+        data=request.data,
+        partial=True
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "Profile updated successfully.",
+            "user": serializer.data
+        })
+
+    return Response(serializer.errors, status=400)
 
 # admin to view staff and cars sold
 class StaffViewSet(viewsets.ModelViewSet):
@@ -135,3 +148,34 @@ class StaffViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(username__icontains=username)
         return queryset
 
+from .serializers import ChangePasswordSerializer
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def ChangePassword(request):
+
+    serializer = ChangePasswordSerializer(data=request.data)
+
+    if serializer.is_valid():
+
+        user = request.user
+
+        if not user.check_password(
+            serializer.validated_data["current_password"]
+        ):
+            return Response(
+                {"error": "Current password is incorrect."},
+                status=400
+            )
+
+        user.set_password(
+            serializer.validated_data["new_password"]
+        )
+
+        user.save()
+
+        return Response({
+            "message": "Password changed successfully."
+        })
+
+    return Response(serializer.errors, status=400)
