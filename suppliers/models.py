@@ -8,6 +8,7 @@ class Supplier(BaseModel):
     contact_person = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, unique=True)
     email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=True)
     address = models.TextField()
 
     def __str__(self):

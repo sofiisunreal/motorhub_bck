@@ -79,7 +79,9 @@ def ViewSuppliers(request):
             "contact_person": supplier.contact_person,
             "phone_number": supplier.phone_number,
             "email": supplier.email,
-            "address": supplier.address
+            "address": supplier.address,
+            "is_active":supplier.is_active
+
         })
 
     return Response(data)
