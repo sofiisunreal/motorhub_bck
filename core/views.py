@@ -196,6 +196,12 @@ def togglestaff_status(request, id):
             {"error": "Staff member not found"},
             status=404
         )
+    if staff == request.user:
+        return Response(
+            {"error": "You cannot deactivate yourself"},
+            status=400
+        )
+
 
     staff.is_active = not staff.is_active
     staff.save()
