@@ -85,7 +85,31 @@ def ViewSuppliers(request):
         })
 
     return Response(data)
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def ToggleSupplierStatus(request, id):
 
+    if request.user.role != "admin":
+        return Response(
+            {"error": "Only admins can change supplier status"},
+            status=403
+        )
+
+    try:
+        supplier = Supplier.objects.get(id=id)
+    except Supplier.DoesNotExist:
+        return Response(
+            {"error": "Supplier not found"},
+            status=404
+        )
+
+    supplier.is_active = not supplier.is_active
+    supplier.save()
+
+    return Response({
+        "message": "Supplier status updated successfully",
+        "is_active": supplier.is_active
+    })
 # update suppliers
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
