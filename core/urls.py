@@ -1,5 +1,5 @@
 from django.urls import include, path
-from .views import Logout, Profile, Register, Login, StaffViewSet
+from .views import Logout, Profile, Register, Login, StaffViewSet, togglestaff_status
 from rest_framework.routers import DefaultRouter
 from .views import ChangePassword
 
@@ -12,5 +12,6 @@ urlpatterns = [
     path('logout/', Logout),
     path('profile/', Profile),
     path("change-password/", ChangePassword),
+    path("staff/<int:id>/toggle-status/",togglestaff_status),
     path('', include(router.urls)),
 ]

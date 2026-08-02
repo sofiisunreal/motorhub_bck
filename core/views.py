@@ -179,3 +179,28 @@ def ChangePassword(request):
         })
 
     return Response(serializer.errors, status=400)
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAdminUser])
+def togglestaff_status(request, id):
+
+    try:
+        staff = User.objects.get(
+            id=id,
+            role="staff"
+        )
+
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Staff member not found"},
+            status=404
+        )
+
+    staff.is_active = not staff.is_active
+    staff.save()
+
+    return Response({
+        "message": "Staff status updated",
+        "is_active": staff.is_active
+    })

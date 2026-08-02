@@ -15,6 +15,7 @@ class StaffSerializer(serializers.ModelSerializer):
             "email",
             "phone_number",
             "role",
+            "is_active",
             "cars_sold"
         ]
 

@@ -50,6 +50,7 @@ def SellCar(request):
             status=400
         )
 
+
     try:
         car.status = "sold"
         car.save()
