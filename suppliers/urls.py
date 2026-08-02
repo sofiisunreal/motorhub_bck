@@ -6,6 +6,6 @@ urlpatterns = [
     path('addsupplier/', AddSupplier),
     path('viewsuppliers/', ViewSuppliers),
     path('updatesupplier/<int:id>/', UpdateSupplier),
-    path("suppliers/<int:id>/toggle-status/",ToggleSupplierStatus),
+    path("<int:id>/toggle-status/",ToggleSupplierStatus),
 ]
 
