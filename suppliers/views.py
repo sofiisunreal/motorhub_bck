@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.db import IntegrityError
+from django.db.models import Count
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -66,10 +67,8 @@ def ViewSuppliers(request):
             {"error": "Only admins can view suppliers"},
             status=403
         )
-
-
     suppliers = Supplier.objects.all()
-
+    suppliers = Supplier.objects.annotate(cars_supplied=Count("car"))
     data = []
 
     for supplier in suppliers:
@@ -80,7 +79,8 @@ def ViewSuppliers(request):
             "phone_number": supplier.phone_number,
             "email": supplier.email,
             "address": supplier.address,
-            "is_active":supplier.is_active
+            "is_active":supplier.is_active,
+            "cars_supplied": supplier.cars_supplied
 
         })
 
