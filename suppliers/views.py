@@ -68,7 +68,7 @@ def ViewSuppliers(request):
             status=403
         )
     suppliers = Supplier.objects.all()
-    suppliers = Supplier.objects.annotate(cars_supplied=Count("car"))
+    suppliers = Supplier.objects.annotate(cars_supplied=Count("cars"))
     data = []
 
     for supplier in suppliers:
