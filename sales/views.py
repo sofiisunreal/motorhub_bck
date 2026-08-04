@@ -431,8 +431,8 @@ def ExportSalesCSV(request):
             sale.selling_price,
             profit,
             sale.sold_by.username if sale.sold_by else "N/A",
-            sale.created_at.strftime("%Y-%m-%d")
-        ])
+            sale.created_at.strftime("%Y-%m-%d") if sale.created_at else "N/A"       
+              ])
 
 
     return response
