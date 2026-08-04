@@ -84,79 +84,92 @@ def ViewSales(request):
 
     if request.user.role == "admin":
         sales = Sale.objects.all()
-
     elif request.user.role == "staff":
-        sales = Sale.objects.filter(
-            sold_by=request.user
-        )
-
+        sales = Sale.objects.filter(sold_by=request.user)
     else:
-        return Response(
-            {"error": "Unauthorized"},
-            status=403
-        )
+        return Response({"error": "Unauthorized"}, status=403)
 
-
-    # filtering by month and year
     month = request.query_params.get("month")
     year = request.query_params.get("year")
-
-
     if month and year:
-        sales = sales.filter(
-            created_at__month=month,
-            created_at__year=year
-        )
+        sales = sales.filter(created_at__month=month, created_at__year=year)
 
-
-    # filter by customer
     customer = request.query_params.get("customer")
-
     if customer:
-        sales = sales.filter(
-            customer_name__icontains=customer
-        )
-
+        sales = sales.filter(customer_name__icontains=customer)
 
     data = []
-
     for sale in sales:
-
-        profit = (
-            sale.selling_price -
-            sale.car.buying_price
-        )
-
+        profit = sale.selling_price - sale.car.buying_price
         data.append({
-
             "sale_id": sale.id,
-
             "vin_number": sale.car.vin_number,
-
             "brand": sale.car.brand,
-
+            "year": sale.car.year,
+            "image": request.build_absolute_uri(sale.car.image.url) if sale.car.image else None,
             "customer_name": sale.customer_name,
-
             "customer_phone": sale.customer_phone,
-
             "selling_price": sale.selling_price,
-
             "buying_price": sale.car.buying_price,
-
             "profit": profit,
-
-            "sold_by": (
-                sale.sold_by.username
-                if sale.sold_by
-                else None
-            ),
-
-            "date": sale.created_at
-
+            "sold_by": sale.sold_by.username if sale.sold_by else None,
+            "date": sale.created_at,
         })
 
-
     return Response(data)
+
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def UpdateSale(request, id):
+    if request.user.role != "admin":
+        return Response({"error": "Only admins can edit sales"}, status=403)
+
+    try:
+        sale = Sale.objects.get(id=id)
+    except Sale.DoesNotExist:
+        return Response({"error": "Sale does not exist"}, status=404)
+
+    customer_name = request.data.get("customer_name")
+    customer_phone = request.data.get("customer_phone")
+    selling_price = request.data.get("selling_price")
+    vin_number = request.data.get("vin_number")
+
+    if customer_name is not None:
+        sale.customer_name = customer_name
+    if customer_phone is not None:
+        sale.customer_phone = customer_phone
+    if selling_price is not None:
+        sale.selling_price = selling_price
+
+    if vin_number is not None and vin_number != sale.car.vin_number:
+        if Car.objects.filter(vin_number=vin_number).exclude(id=sale.car.id).exists():
+            return Response({"error": "Another car already has this VIN number"}, status=400)
+        sale.car.vin_number = vin_number
+        sale.car.save()
+
+    try:
+        sale.save()
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
+
+    profit = sale.selling_price - sale.car.buying_price
+    return Response({
+        "message": "Sale updated successfully",
+        "sale_id": sale.id,
+        "vin_number": sale.car.vin_number,
+        "brand": sale.car.brand,
+        "year": sale.car.year,
+        "image": request.build_absolute_uri(sale.car.image.url) if sale.car.image else None,
+        "customer_name": sale.customer_name,
+        "customer_phone": sale.customer_phone,
+        "selling_price": sale.selling_price,
+        "buying_price": sale.car.buying_price,
+        "profit": profit,
+        "sold_by": sale.sold_by.username if sale.sold_by else None,
+        "date": sale.created_at,
+    }, status=200)
 
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
