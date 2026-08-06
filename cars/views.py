@@ -64,15 +64,7 @@ def AddCar(request):
 # view cars based on statusof the car
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def ViewCars(request,id):
-    try:
-       car=Car.objects.get(id=id)
-    except Car.DoesNotExist:
-      return Response(
-        {"error": "Car does not exist"},
-        status=404
-    )
-
+def ViewCars(request):
     status_filter = request.query_params.get("status")
     if status_filter:
         cars = Car.objects.filter(status=status_filter)
@@ -82,6 +74,25 @@ def ViewCars(request,id):
     serializer = CarSerializer(cars, many=True, context={"request": request})
     return Response(serializer.data, status=200)
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ViewSingleCar(request, id):
+
+    try:
+        car = Car.objects.get(id=id)
+
+    except Car.DoesNotExist:
+        return Response(
+            {"error":"Car does not exist"},
+            status=404
+        )
+
+    serializer = CarSerializer(
+        car,
+        context={"request": request}
+    )
+
+    return Response(serializer.data)
 
 # update car status
 @api_view(["PATCH"])
