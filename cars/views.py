@@ -64,7 +64,15 @@ def AddCar(request):
 # view cars based on statusof the car
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def ViewCars(request):
+def ViewCars(request,id):
+    try:
+       car=Car.objects.get(id=id)
+    except Car.DoesNotExist:
+      return Response(
+        {"error": "Car does not exist"},
+        status=404
+    )
+
     status_filter = request.query_params.get("status")
     if status_filter:
         cars = Car.objects.filter(status=status_filter)
