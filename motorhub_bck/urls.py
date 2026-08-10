@@ -44,6 +44,7 @@ urlpatterns = [
     path('api/suppliers/', include('suppliers.urls')),
     path("api/notices", include("notices.urls")),
     path('api/sales/', include('sales.urls')),
+    path('api/quotes/', include('quotes.urls'))
 ]
 
 # if settings.DEBUG:

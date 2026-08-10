@@ -1,6 +1,6 @@
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework.response import Response
 from rest_framework import generics
 from cars.serializers import CarSerializer
@@ -63,7 +63,7 @@ def AddCar(request):
 
 # view cars based on statusof the car
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def ViewCars(request):
     status_filter = request.query_params.get("status")
     if status_filter:
@@ -75,7 +75,7 @@ def ViewCars(request):
     return Response(serializer.data, status=200)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def ViewSingleCar(request, id):
 
     try:
