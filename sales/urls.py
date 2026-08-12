@@ -7,5 +7,5 @@ urlpatterns = [
     path('admindashboard/', AdminDashboard),
     path('exportsalescsv/', ExportSalesCSV),
     path('update-sale/<int:id>/', UpdateSale),
-    path('addpayment', AddPayment)
+    path('addpayment/<int:id>/', AddPayment)
 ]
