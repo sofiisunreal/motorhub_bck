@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 
 from cars.models import Car
@@ -9,23 +11,27 @@ class Sale(BaseModel):
     car = models.OneToOneField(
         Car,
         on_delete=models.PROTECT,
-        related_name='sale'
-    )
-    PAYMENT_STATUS = (
-        ("partial", "Partially Paid"),
-        ("paid", "Paid"),
+        related_name="sale"
     )
 
     sold_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='sales'
+        related_name="sales"
     )
 
-    customer_name = models.CharField(max_length=100,null=True,blank=True)
+    customer_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
 
-    customer_phone = models.CharField(max_length=15,null=True,blank=True)
+    customer_phone = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True
+    )
 
     selling_price = models.DecimalField(
         max_digits=12,
@@ -36,11 +42,12 @@ class Sale(BaseModel):
         blank=True,
         null=True
     )
+
     @property
     def amount_paid(self):
-         return self.payments.aggregate(
-                total=Sum("amount")
-            )["total"] or 0
+        return self.payments.aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
 
     @property
     def balance(self):
@@ -55,7 +62,6 @@ class Sale(BaseModel):
 
     def __str__(self):
         return f"{self.car} - KES {self.selling_price}"
-    
 
 class Payment(BaseModel):
     PAYMENT_METHODS = (
