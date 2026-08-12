@@ -898,26 +898,27 @@ def StaffDashboard(request):
     # =========================
 
     today_collected = Payment.objects.filter(
-        received_by=request.user,
+        sale__sold_by=request.user,
         payment_date__date=today
     ).aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
 
+
     monthly_collected = Payment.objects.filter(
-        received_by=request.user,
+        sale__sold_by=request.user,
         payment_date__date__gte=month_start
     ).aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
 
+
     total_collected = Payment.objects.filter(
-        received_by=request.user
+        sale__sold_by=request.user
     ).aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
-
-    # =========================
+    # ==================idd=======
     # OUTSTANDING
     # =========================
 
