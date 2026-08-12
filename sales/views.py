@@ -848,6 +848,8 @@ def AdminDashboard(request):
         "recent_sales": recent_sales
     })
 
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def StaffDashboard(request):
@@ -905,6 +907,15 @@ def StaffDashboard(request):
         )["total"]
         or Decimal("0.00")
     )
+
+    # =========================
+    # PAYMENTS
+    #
+    # Payments are linked to Sale.
+    # We therefore filter through
+    # sale__sold_by.
+    # =========================
+
     staff_payments = Payment.objects.filter(
         sale__sold_by=request.user
     )
@@ -935,7 +946,7 @@ def StaffDashboard(request):
     )
 
     # =========================
-    # OUTSTANDING BALANCE
+    # OUTSTANDING
     # =========================
 
     today_outstanding = max(
@@ -988,15 +999,23 @@ def StaffDashboard(request):
 
     # =========================
     # PAYMENT STATUS
+    #
+    # Sale does NOT have a
+    # payment_status database
+    # field, so calculate it
+    # from amount_paid/balance.
     # =========================
 
-    paid_sales = sales.filter(
-        payment_status="paid"
-    ).count()
+    paid_sales = 0
+    partial_sales = 0
 
-    partial_sales = sales.filter(
-        payment_status="partial"
-    ).count()
+    for sale in sales:
+
+        if sale.amount_paid >= sale.selling_price:
+            paid_sales += 1
+
+        else:
+            partial_sales += 1
 
     # =========================
     # RECENT SALES
@@ -1007,12 +1026,22 @@ def StaffDashboard(request):
     recent_sales_queryset = (
         sales
         .select_related("car", "sold_by")
+        .prefetch_related("payments")
         .order_by("-created_at")[:5]
     )
 
     for sale in recent_sales_queryset:
 
+        amount_paid = sale.amount_paid
+        balance = sale.balance
+
+        if amount_paid >= sale.selling_price:
+            payment_status = "paid"
+        else:
+            payment_status = "partial"
+
         recent_sales.append({
+
             "sale_id": sale.id,
 
             "vin_number": sale.car.vin_number,
@@ -1025,10 +1054,10 @@ def StaffDashboard(request):
             "selling_price": sale.selling_price,
             "buying_price": sale.car.buying_price,
 
-            "amount_paid": sale.amount_paid,
-            "balance": sale.balance,
+            "amount_paid": amount_paid,
+            "balance": balance,
 
-            "payment_status": sale.payment_status,
+            "payment_status": payment_status,
 
             "profit": (
                 sale.selling_price -
@@ -1060,10 +1089,15 @@ def StaffDashboard(request):
         # =========================
 
         "today": {
+
             "cars_sold": today_sales.count(),
+
             "sales_value": today_sales_value,
+
             "collected": today_collected,
+
             "outstanding": today_outstanding,
+
             "profit": today_profit,
         },
 
@@ -1072,10 +1106,15 @@ def StaffDashboard(request):
         # =========================
 
         "monthly": {
+
             "cars_sold": monthly_sales.count(),
+
             "sales_value": monthly_sales_value,
+
             "collected": monthly_collected,
+
             "outstanding": monthly_outstanding,
+
             "profit": monthly_profit,
         },
 
@@ -1084,10 +1123,15 @@ def StaffDashboard(request):
         # =========================
 
         "all_time": {
+
             "cars_sold": sales.count(),
+
             "sales_value": total_sales_value,
+
             "collected": total_collected,
+
             "outstanding": total_outstanding,
+
             "profit": total_profit,
         },
 
@@ -1096,7 +1140,9 @@ def StaffDashboard(request):
         # =========================
 
         "payment_status": {
+
             "paid_sales": paid_sales,
+
             "partial_sales": partial_sales,
         },
 
@@ -1106,7 +1152,6 @@ def StaffDashboard(request):
 
         "recent_sales": recent_sales,
     })
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def ExportSalesCSV(request):
