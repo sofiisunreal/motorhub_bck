@@ -668,14 +668,15 @@ def AdminDashboard(request):
     total_collected = Payment.objects.aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
+
+
 # =========================
-    # OUTSTANDING BALANCE
-    # =========================
+# OUTSTANDING BALANCE
+# =========================
 
     total_outstanding = (
         total_sales_value - total_collected
     )
-
     # =========================
     # PROFIT
     # =========================
