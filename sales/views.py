@@ -847,10 +847,14 @@ def AdminDashboard(request):
 
         "recent_sales": recent_sales
     })
-# staff dashboard
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def StaffDashboard(request):
+
+    # =========================
+    # AUTHORIZATION
+    # =========================
 
     if request.user.role != "staff":
         return Response(
@@ -881,48 +885,71 @@ def StaffDashboard(request):
     # SALES VALUE
     # =========================
 
-    today_sales_value = today_sales.aggregate(
-        total=Sum("selling_price")
-    )["total"] or Decimal("0.00")
+    today_sales_value = (
+        today_sales.aggregate(
+            total=Sum("selling_price")
+        )["total"]
+        or Decimal("0.00")
+    )
 
-    monthly_sales_value = monthly_sales.aggregate(
-        total=Sum("selling_price")
-    )["total"] or Decimal("0.00")
+    monthly_sales_value = (
+        monthly_sales.aggregate(
+            total=Sum("selling_price")
+        )["total"]
+        or Decimal("0.00")
+    )
 
-    total_sales_value = sales.aggregate(
-        total=Sum("selling_price")
-    )["total"] or Decimal("0.00")
-
-    # =========================
-    # MONEY COLLECTED
-    # =========================
-
-    today_collected = Payment.objects.filter(
-        sale__sold_by=request.user,
-        payment_date__date=today
-    ).aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0.00")
-
-
-    monthly_collected = Payment.objects.filter(
-        sale__sold_by=request.user,
-        payment_date__date__gte=month_start
-    ).aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0.00")
-
-
-    total_collected = Payment.objects.filter(
+    total_sales_value = (
+        sales.aggregate(
+            total=Sum("selling_price")
+        )["total"]
+        or Decimal("0.00")
+    )
+    staff_payments = Payment.objects.filter(
         sale__sold_by=request.user
-    ).aggregate(
-        total=Sum("amount")
-    )["total"] or Decimal("0.00")
-    # ==================idd=======
-    # OUTSTANDING
+    )
+
+    today_collected = (
+        staff_payments.filter(
+            payment_date__date=today
+        ).aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    monthly_collected = (
+        staff_payments.filter(
+            payment_date__date__gte=month_start
+        ).aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    total_collected = (
+        staff_payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # =========================
+    # OUTSTANDING BALANCE
     # =========================
 
-    total_outstanding = (
+    today_outstanding = max(
+        Decimal("0.00"),
+        today_sales_value - today_collected
+    )
+
+    monthly_outstanding = max(
+        Decimal("0.00"),
+        monthly_sales_value - monthly_collected
+    )
+
+    total_outstanding = max(
+        Decimal("0.00"),
         total_sales_value - total_collected
     )
 
@@ -930,32 +957,46 @@ def StaffDashboard(request):
     # PROFIT
     # =========================
 
-    today_profit = today_sales.aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F("selling_price") - F("car__buying_price"),
-                output_field=DecimalField()
-            )
+    profit_expression = ExpressionWrapper(
+        F("selling_price") - F("car__buying_price"),
+        output_field=DecimalField(
+            max_digits=15,
+            decimal_places=2
         )
-    )["total"] or Decimal("0.00")
+    )
 
-    monthly_profit = monthly_sales.aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F("selling_price") - F("car__buying_price"),
-                output_field=DecimalField()
-            )
-        )
-    )["total"] or Decimal("0.00")
+    today_profit = (
+        today_sales.aggregate(
+            total=Sum(profit_expression)
+        )["total"]
+        or Decimal("0.00")
+    )
 
-    total_profit = sales.aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F("selling_price") - F("car__buying_price"),
-                output_field=DecimalField()
-            )
-        )
-    )["total"] or Decimal("0.00")
+    monthly_profit = (
+        monthly_sales.aggregate(
+            total=Sum(profit_expression)
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    total_profit = (
+        sales.aggregate(
+            total=Sum(profit_expression)
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # =========================
+    # PAYMENT STATUS
+    # =========================
+
+    paid_sales = sales.filter(
+        payment_status="paid"
+    ).count()
+
+    partial_sales = sales.filter(
+        payment_status="partial"
+    ).count()
 
     # =========================
     # RECENT SALES
@@ -963,72 +1004,108 @@ def StaffDashboard(request):
 
     recent_sales = []
 
-    for sale in sales.select_related(
-        "car"
-    ).order_by("-created_at")[:5]:
+    recent_sales_queryset = (
+        sales
+        .select_related("car", "sold_by")
+        .order_by("-created_at")[:5]
+    )
+
+    for sale in recent_sales_queryset:
 
         recent_sales.append({
             "sale_id": sale.id,
+
             "vin_number": sale.car.vin_number,
             "brand": sale.car.brand,
+            "year": sale.car.year,
+
             "customer_name": sale.customer_name,
+            "customer_phone": sale.customer_phone,
+
             "selling_price": sale.selling_price,
+            "buying_price": sale.car.buying_price,
+
             "amount_paid": sale.amount_paid,
             "balance": sale.balance,
+
             "payment_status": sale.payment_status,
+
             "profit": (
                 sale.selling_price -
                 sale.car.buying_price
             ),
-            "date": sale.created_at
+
+            "date": sale.created_at,
         })
 
+    # =========================
+    # RESPONSE
+    # =========================
+
     return Response({
+
+        # =========================
+        # STAFF
+        # =========================
 
         "staff": {
             "id": request.user.id,
             "username": request.user.username,
             "email": request.user.email,
-            "phone_number": request.user.phone_number
+            "phone_number": request.user.phone_number,
         },
 
         # =========================
-        # SALES
+        # TODAY
         # =========================
 
-        "cars_sold_today": today_sales.count(),
-        "cars_sold_this_month": monthly_sales.count(),
-        "total_cars_sold": sales.count(),
-
-        "today_sales_value": today_sales_value,
-        "monthly_sales_value": monthly_sales_value,
-        "total_sales_value": total_sales_value,
-
-        # =========================
-        # PAYMENTS
-        # =========================
-
-        "today_collected": today_collected,
-        "monthly_collected": monthly_collected,
-        "total_collected": total_collected,
-
-        "total_outstanding": total_outstanding,
+        "today": {
+            "cars_sold": today_sales.count(),
+            "sales_value": today_sales_value,
+            "collected": today_collected,
+            "outstanding": today_outstanding,
+            "profit": today_profit,
+        },
 
         # =========================
-        # PROFIT
+        # THIS MONTH
         # =========================
 
-        "today_profit": today_profit,
-        "monthly_profit": monthly_profit,
-        "total_profit": total_profit,
+        "monthly": {
+            "cars_sold": monthly_sales.count(),
+            "sales_value": monthly_sales_value,
+            "collected": monthly_collected,
+            "outstanding": monthly_outstanding,
+            "profit": monthly_profit,
+        },
+
+        # =========================
+        # ALL TIME
+        # =========================
+
+        "all_time": {
+            "cars_sold": sales.count(),
+            "sales_value": total_sales_value,
+            "collected": total_collected,
+            "outstanding": total_outstanding,
+            "profit": total_profit,
+        },
+
+        # =========================
+        # PAYMENT STATUS
+        # =========================
+
+        "payment_status": {
+            "paid_sales": paid_sales,
+            "partial_sales": partial_sales,
+        },
 
         # =========================
         # RECENT SALES
         # =========================
 
-        "recent_sales": recent_sales
+        "recent_sales": recent_sales,
     })
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
