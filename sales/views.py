@@ -474,7 +474,7 @@ def UpdateSale(request, id):
     selling_price = request.data.get("selling_price")
     vin_number = request.data.get("vin_number")
     notes = request.data.get("notes")
- 
+
     if customer_name is not None:
         sale.customer_name = customer_name
 
@@ -543,7 +543,7 @@ def UpdateSale(request, id):
             status=400
         )
 
-  
+
     amount_paid = sale.amount_paid
     balance = sale.balance
     payment_status = sale.payment_status
@@ -647,27 +647,31 @@ def AdminDashboard(request):
     total_sales_value = all_sales.aggregate(
         total=Sum("selling_price")
     )["total"] or Decimal("0.00")
-
-    # =========================
-    # MONEY COLLECTED
-    # =========================
+# =========================
+# MONEY COLLECTED
+# =========================
 
     today_collected = Payment.objects.filter(
+        sale__sold_by=request.user,
         payment_date__date=today
     ).aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
 
+
     monthly_collected = Payment.objects.filter(
+        sale__sold_by=request.user,
         payment_date__date__gte=month_start
     ).aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
 
-    total_collected = Payment.objects.aggregate(
+
+    total_collected = Payment.objects.filter(
+        sale__sold_by=request.user
+    ).aggregate(
         total=Sum("amount")
     )["total"] or Decimal("0.00")
-
     # =========================
     # OUTSTANDING BALANCE
     # =========================
